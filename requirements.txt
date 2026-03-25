@@ -1,0 +1,4 @@
+pygame
+./pybox
+adafruit-circuitpython-servokit
+RPi.GPIO
