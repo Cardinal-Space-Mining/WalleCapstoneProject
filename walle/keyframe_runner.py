@@ -17,11 +17,11 @@ class KeyframeSeq:
 
     @staticmethod
     def from_steps_staggered(
-        steps: list[Callable[[], Any]], dt: float
+        steps: list[Callable[[], Any]], dt: float, phase: float = 0
     ) -> "KeyframeSeq":
         return KeyframeSeq(
             time.monotonic(),
-            deque(KeyframeStep(dt * i, step) for i, step in enumerate(steps)),
+            deque(KeyframeStep((dt * i) + phase, step) for i, step in enumerate(steps)),
         )
 
     def update(self):
