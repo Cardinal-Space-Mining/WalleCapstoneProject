@@ -4,7 +4,14 @@ from pybox import UltimateC
 
 import math
 
+import os
+
 import pygame
+
+if pygame.mixer.get_init() is None:
+    pygame.mixer.init()
+
+__audio_dir__ = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audio')
 
 
 class LimitedServo:
@@ -68,10 +75,10 @@ class Walle:
         180,
     )
 
-    _audioA = pygame.mixer.Sound("/home/pi/walle/audio/eve.mp3")
-    _audioX = pygame.mixer.Sound("/home/pi/walle/audio/Wa...Wall-e.mp3")
-    _audioY = pygame.mixer.Sound("/home/pi/walle/audio/Aaaaah !.mp3")
-    _audioB = pygame.mixer.Sound("/home/pi/walle/audio/Ohooo !.mp3")
+    _audioA = pygame.mixer.Sound(os.path.join(__audio_dir__, 'eve.mp3'))
+    _audioX = pygame.mixer.Sound(os.path.join(__audio_dir__, 'Wa...Wall-e.mp3'))
+    _audioY = pygame.mixer.Sound(os.path.join(__audio_dir__, 'Aaaaah !.mp3'))
+    _audioB = pygame.mixer.Sound(os.path.join(__audio_dir__, 'Ohooo !.mp3'))
 
     def __init__(self, kit: ServoKit) -> None:
         self._kit = kit
@@ -94,7 +101,7 @@ class Walle:
 
     @property
     def rtrack(self) -> ContinuousServo:
-        return self._kit.continuous_servo[0]
+        return self._kit.continuous_servo[1]
 
     @property
     def lshoulder(self) -> LimitedServo:
@@ -174,10 +181,10 @@ class Walle:
 
     def _handle_track_ctrl(self, controller: UltimateC):
         motor_a, motor_b = Walle._motor_pwr(
-            controller.get_l_joy_x(), controller.get_l_joy_y()
+            -controller.get_l_joy_x(), controller.get_l_joy_y()
         )
-        self.ltrack.throttle = motor_a
-        self.rtrack.throttle = -motor_b
+        self.ltrack.throttle = -motor_a
+        self.rtrack.throttle = motor_b
 
     def _handle_audio(self, controller: UltimateC):
         # Audio A
