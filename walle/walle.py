@@ -108,9 +108,9 @@ try:
 
     while True:
         # Motor Controls
-        # motor_a, motor_b = motor_pwr(controller.get_l_joy_x(), controller.get_l_joy_y())
-        motor_a = controller.get_l_joy_y()
-        motor_b = controller.get_r_joy_y()
+        motor_a, motor_b = motor_pwr(controller.get_l_joy_x(), controller.get_l_joy_y())
+        # motor_a = controller.get_l_joy_y()
+        # motor_b = controller.get_r_joy_y()
         kit.continuous_servo[motorA_channel].throttle = motor_a
         kit.continuous_servo[motorB_channel].throttle = -motor_b
 
