@@ -269,7 +269,11 @@ class Walle:
         headPan_speed = 1.0
         headTilt_speed = 1.0
         if controller.get_l_bumper() == 0:
-            self.headpan.angle += controller.get_r_joy_x() * headPan_speed
+            # print(f"D_neck: {controller.get_r_joy_x() * headPan_speed}")
+            d_neck = controller.get_r_joy_x() * headPan_speed
+            if abs(d_neck )< 0.01:
+                d_neck = 0
+            self.headpan.angle += d_neck
             self.headtilt.angle += controller.get_r_joy_y() * headTilt_speed
 
     def _handle_eyes(self, controller: UltimateC):
@@ -303,6 +307,7 @@ def main():
 
     walle = Walle(ServoKit(channels=16))
     atexit.register(walle.rest)
+
     with UltimateC() as controller:
         try:
             while True:
