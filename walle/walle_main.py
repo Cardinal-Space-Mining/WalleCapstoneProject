@@ -9,8 +9,7 @@ import atexit
 
 import pygame
 
-
-__audio_dir__ = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audio')
+__audio_dir__ = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio")
 
 
 class LimitedServo:
@@ -47,7 +46,17 @@ class LimitedServo:
 
 
 class Walle:
-    __slots__ = ("_kit", "_not_a", "_not_b", "_not_x", "_not_y", "_audioA", "_audioX", "_audioY", "_audioB")
+    __slots__ = (
+        "_kit",
+        "_not_a",
+        "_not_b",
+        "_not_x",
+        "_not_y",
+        "_audioA",
+        "_audioX",
+        "_audioY",
+        "_audioB",
+    )
     _kit: ServoKit
     _not_a: bool
     _not_b: bool
@@ -76,10 +85,10 @@ class Walle:
         0,
     )
 
-    _audioA_path = os.path.join(__audio_dir__, 'eve.mp3')
-    _audioX_path = os.path.join(__audio_dir__, 'Wa...Wall-e.mp3')
-    _audioY_path = os.path.join(__audio_dir__, 'Aaaaah !.mp3')
-    _audioB_path = os.path.join(__audio_dir__, 'Ohooo !.mp3')
+    _audioA_path = os.path.join(__audio_dir__, "eve.mp3")
+    _audioX_path = os.path.join(__audio_dir__, "Wa...Wall-e.mp3")
+    _audioY_path = os.path.join(__audio_dir__, "Aaaaah !.mp3")
+    _audioB_path = os.path.join(__audio_dir__, "Ohooo !.mp3")
 
     def __init__(self, kit: ServoKit) -> None:
         self._kit = kit
@@ -92,8 +101,6 @@ class Walle:
         self._audioX = pygame.mixer.Sound(Walle._audioX_path)
         self._audioY = pygame.mixer.Sound(Walle._audioY_path)
         self._audioB = pygame.mixer.Sound(Walle._audioB_path)
-
-
 
     def reset_servos(self):
         self.ltrack.throttle = 0
@@ -272,7 +279,7 @@ class Walle:
             self.eyes.angle = self.eyes.min_angle
 
     def rest(self):
-        for x in range(2,len(self._kit.servo)):
+        for x in range(2, len(self._kit.servo)):
             try:
                 self._kit.servo[x].angle = None
             except ValueError as e:
@@ -304,7 +311,6 @@ def main():
                 walle.update(controller)
         except KeyboardInterrupt:
             pass
-    
 
 
 if __name__ == "__main__":

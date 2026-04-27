@@ -22,7 +22,7 @@ class UltimateC:
         "b_button",
         "x_button",
         "y_button",
-        "_controller"
+        "_controller",
     )
 
     def __init__(self, controller_type=None) -> None:
@@ -207,12 +207,12 @@ def main():
                 for event in pygame.event.get():
                     controller.handle_pygame_evt(event)
                 data = {
-                    "controller.get_l_joy_x()" : controller.get_l_joy_x(),
-                    "controller.get_l_joy_y()" : controller.get_l_joy_y(),
-                    "controller.get_l_trigger()" : controller.get_l_trigger(),
-                    "controller.get_r_joy_x()" : controller.get_r_joy_x(),
-                    "controller.get_r_joy_y()" : controller.get_r_joy_y(),
-                    "controller.get_r_trigger()" : controller.get_r_trigger(),
+                    "controller.get_l_joy_x()": controller.get_l_joy_x(),
+                    "controller.get_l_joy_y()": controller.get_l_joy_y(),
+                    "controller.get_l_trigger()": controller.get_l_trigger(),
+                    "controller.get_r_joy_x()": controller.get_r_joy_x(),
+                    "controller.get_r_joy_y()": controller.get_r_joy_y(),
+                    "controller.get_r_trigger()": controller.get_r_trigger(),
                 }
                 # print(controller.get_a_button())
                 print()
