@@ -5,11 +5,9 @@ from pybox import UltimateC
 import math
 
 import os
+import atexit
 
 import pygame
-
-if pygame.mixer.get_init() is None:
-    pygame.mixer.init(buffer=4096)  # Increase buff size so underruns don't occur
 
 
 __audio_dir__ = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audio')
@@ -49,7 +47,7 @@ class LimitedServo:
 
 
 class Walle:
-    __slots__ = ("_kit", "_not_a", "_not_b", "_not_x", "_not_y")
+    __slots__ = ("_kit", "_not_a", "_not_b", "_not_x", "_not_y", "_audioA", "_audioX", "_audioY", "_audioB")
     _kit: ServoKit
     _not_a: bool
     _not_b: bool
@@ -78,10 +76,10 @@ class Walle:
         0,
     )
 
-    _audioA = pygame.mixer.Sound(os.path.join(__audio_dir__, 'eve.mp3'))
-    _audioX = pygame.mixer.Sound(os.path.join(__audio_dir__, 'Wa...Wall-e.mp3'))
-    _audioY = pygame.mixer.Sound(os.path.join(__audio_dir__, 'Aaaaah !.mp3'))
-    _audioB = pygame.mixer.Sound(os.path.join(__audio_dir__, 'Ohooo !.mp3'))
+    _audioA_path = os.path.join(__audio_dir__, 'eve.mp3')
+    _audioX_path = os.path.join(__audio_dir__, 'Wa...Wall-e.mp3')
+    _audioY_path = os.path.join(__audio_dir__, 'Aaaaah !.mp3')
+    _audioB_path = os.path.join(__audio_dir__, 'Ohooo !.mp3')
 
     def __init__(self, kit: ServoKit) -> None:
         self._kit = kit
@@ -90,6 +88,12 @@ class Walle:
         self._not_x = True
         self._not_y = True
         self.reset_servos()
+        self._audioA = pygame.mixer.Sound(Walle._audioA_path)
+        self._audioX = pygame.mixer.Sound(Walle._audioX_path)
+        self._audioY = pygame.mixer.Sound(Walle._audioY_path)
+        self._audioB = pygame.mixer.Sound(Walle._audioB_path)
+
+
 
     def reset_servos(self):
         self.ltrack.throttle = 0
@@ -192,7 +196,7 @@ class Walle:
     def _handle_audio(self, controller: UltimateC):
         # Audio A
         if controller.get_a_button() == 1 and self._not_a:
-            Walle._audioA.play()
+            self._audioA.play()
             # print("Audio A")
             self._not_a = False
         if controller.get_a_button() != 1:
@@ -200,7 +204,7 @@ class Walle:
 
         # Audio B
         if controller.get_b_button() == 1 and self._not_b:
-            Walle._audioB.play()
+            self._audioB.play()
             # print("Audio B")
             self._not_b = False
         if controller.get_b_button() != 1:
@@ -208,7 +212,7 @@ class Walle:
 
         # Audio X
         if controller.get_x_button() == 1 and self._not_x:
-            Walle._audioX.play()
+            self._audioX.play()
             # print("Audio X")
             self._not_x = False
         if controller.get_x_button() != 1:
@@ -216,7 +220,7 @@ class Walle:
 
         # Audio Y
         if controller.get_y_button() == 1 and self._not_y:
-            Walle._audioY.play()
+            self._audioY.play()
             # print("Audio Y")
             self._not_y = False
         if controller.get_y_button() != 1:
@@ -286,14 +290,21 @@ class Walle:
 
 
 def main():
+    pygame.init()
+    pygame.joystick.init()
+    pygame.mixer.init(buffer=4096)  # Increase buff size so underruns don't occur
+
     walle = Walle(ServoKit(channels=16))
+    atexit.register(walle.rest)
     with UltimateC() as controller:
         try:
             while True:
+                for event in pygame.event.get():
+                    controller.handle_pygame_evt(event)
                 walle.update(controller)
-        except:
+        except KeyboardInterrupt:
             pass
-    walle.rest()
+    
 
 
 if __name__ == "__main__":

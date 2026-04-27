@@ -4,9 +4,6 @@ from threading import Thread, Lock, Event
 
 class UltimateC:
     __slots__ = (
-        "_stop_flag",
-        "_val_lock",
-        "_thread",
         "l_joy_x",
         "l_joy_y",
         "r_joy_x",
@@ -29,9 +26,6 @@ class UltimateC:
     )
 
     def __init__(self, controller_type=None) -> None:
-        self._stop_flag = Event()
-        self._val_lock = Lock()
-        self._thread = None
         self.l_joy_x = 0.0
         self.l_joy_y = 0.0
         self.r_joy_x = 0.0
@@ -65,72 +59,68 @@ class UltimateC:
         self._controller.init()
         print("controller connected")
 
-        self._thread = Thread(target=self._ultimate_c_listen)  # , daemon=True)
-        self._thread.start()
-
         return self  # required for "as" usage
 
     def __exit__(self, exc_type, exc, tb):
-        self._stop_flag.set()
-        if self._thread is not None:
-            self._thread.join()
+        pass
+
+    def handle_pygame_evt(self, event):
+        if event.type == pygame.JOYAXISMOTION:
+            if event.axis == 0:
+                self.l_joy_x = round(event.value, 3)
+            elif event.axis == 1:
+                self.l_joy_y = round(-event.value, 3)
+            elif event.axis == 2:
+                self.r_joy_x = round(event.value, 3)
+            elif event.axis == 3:
+                self.r_joy_y = round(-event.value, 3)
+            elif event.axis == 4:
+                self.r_trigger = round((event.value + 1) / 2, 3)
+            elif event.axis == 5:
+                self.l_trigger = round((event.value + 1) / 2, 3)
+
+        elif event.type in (pygame.JOYBUTTONUP, pygame.JOYBUTTONDOWN):
+
+            def toggle(attr):
+                setattr(self, attr, 1 - getattr(self, attr))
+
+            mapping = {
+                0: "a_button",
+                1: "b_button",
+                3: "x_button",
+                4: "y_button",
+                6: "l_bumper",
+                7: "r_bumper",
+                10: "select",
+                11: "start",
+                13: "l_joy_button",
+                14: "r_joy_button",
+            }
+
+            if event.button in mapping:
+                toggle(mapping[event.button])
+
+        elif event.type == pygame.JOYHATMOTION:
+            self.d_pad_x, self.d_pad_y = event.value
+
+        elif event.type == pygame.JOYDEVICEREMOVED:
+            self._reset_values()
+
+            print("controller lost, attempting reconnect...")
+            while True:
+                try:
+                    pygame.event.get()
+                    self._controller = pygame.joystick.Joystick(0)
+                    break
+                except:
+                    pass
+
+            self._controller.init()
+            print("controller connected")
 
     def _ultimate_c_listen(self):
-        while not self._stop_flag.is_set():
-            for event in pygame.event.get():
-                with self._val_lock:
-                    if event.type == pygame.JOYAXISMOTION:
-                        if event.axis == 0:
-                            self.l_joy_x = round(event.value, 3)
-                        elif event.axis == 1:
-                            self.l_joy_y = round(-event.value, 3)
-                        elif event.axis == 2:
-                            self.r_joy_x = round(event.value, 3)
-                        elif event.axis == 3:
-                            self.r_joy_y = round(-event.value, 3)
-                        elif event.axis == 4:
-                            self.r_trigger = round((event.value + 1) / 2, 3)
-                        elif event.axis == 5:
-                            self.l_trigger = round((event.value + 1) / 2, 3)
-
-                    elif event.type in (pygame.JOYBUTTONUP, pygame.JOYBUTTONDOWN):
-
-                        def toggle(attr):
-                            setattr(self, attr, 1 - getattr(self, attr))
-
-                        mapping = {
-                            0: "a_button",
-                            1: "b_button",
-                            3: "x_button",
-                            4: "y_button",
-                            6: "l_bumper",
-                            7: "r_bumper",
-                            10: "select",
-                            11: "start",
-                            13: "l_joy_button",
-                            14: "r_joy_button",
-                        }
-
-                        if event.button in mapping:
-                            toggle(mapping[event.button])
-
-                    elif event.type == pygame.JOYHATMOTION:
-                        self.d_pad_x, self.d_pad_y = event.value
-
-                    elif event.type == pygame.JOYDEVICEREMOVED:
-                        self._reset_values()
-
-                        print("controller lost, attempting reconnect...")
-                        while True:
-                            try:
-                                pygame.event.get()
-                                self._controller = pygame.joystick.Joystick(0)
-                                break
-                            except:
-                                pass
-
-                        self._controller.init()
-                        print("controller connected")
+        for event in pygame.event.get():
+            self.handle_pygame_evt(event)
 
     def _reset_values(self):
         self.l_joy_x = 0.0
@@ -214,6 +204,8 @@ def main():
     try:
         with UltimateC() as controller:
             while True:
+                for event in pygame.event.get():
+                    controller.handle_pygame_evt(event)
                 data = {
                     "controller.get_l_joy_x()" : controller.get_l_joy_x(),
                     "controller.get_l_joy_y()" : controller.get_l_joy_y(),
