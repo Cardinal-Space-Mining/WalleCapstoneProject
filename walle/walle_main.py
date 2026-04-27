@@ -276,15 +276,14 @@ class Walle:
 
 
 def main():
-    controller = UltimateC()
     walle = Walle(ServoKit(channels=16))
-    try:
-        while True:
-            walle.update(controller)
-    except Exception as e:
-        pass
+    with UltimateC() as controller:
+        try:
+            while True:
+                walle.update(controller)
+        except:
+            pass
     walle.reset_servos()
-    controller._stop_flag.set()
 
 
 if __name__ == "__main__":

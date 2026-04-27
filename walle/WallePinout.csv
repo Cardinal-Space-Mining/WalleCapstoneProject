@@ -1,0 +1,17 @@
+ Pin  , Function          , Controller Mapping    ,Open,Closed,Min,Max, Normal Pose
+0, Left motor        , l_joy_y and l_joy_x,,,0,0,
+1, Right Motor       , l_joy_y and l_joy_x,,,0,0,
+2, Left Shoulder     , l_bumper + r_joy_y,40,150,40,150,150
+3, Left Elbow        , l_bumper + r_joy_x,130,160,130,160,150
+4, Left Wrist        , select and start,0,180,0,180,60
+5, Left Thumb        , l_trigger,60,120,60,120,110
+6, Left Fingers      , l_trigger,50,180,50,180,120
+7, Right Shoulder    , l_bumper + r_joy_y,50,130,50,130,50
+8, Right Elbow       , l_bumper + r_joy_x,180,20,20,180,60
+9, Right Wrist       , select and start,0,180,0,180,135
+10, Right Thumb       , r_trigger,48,180,48,180,132
+11, Right Finger      , r_trigger,48,180,48,180,110
+12, Head Pan          , r_joy_x,0,180,0,180,90
+13, Head Tilt         , r_joy_y,95,150,95,150,150
+14, Eye Actuation     , r_joy_button,45,180,45,180,110
+15, N/A               ,,,,0,0,
