@@ -9,7 +9,8 @@ import os
 import pygame
 
 if pygame.mixer.get_init() is None:
-    pygame.mixer.init()
+    pygame.mixer.init(buffer=4096)  # Increase buff size so underruns don't occur
+
 
 __audio_dir__ = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'audio')
 
@@ -55,24 +56,26 @@ class Walle:
     _not_x: bool
     _not_y: bool
 
-    _def_servo_pos = (0, 0, 90, 90, 60, 93, 94, 90, 90, 120, 98, 99, 90, 90, 102)
-    _mins = (0, 0, 45, 80, 0, 50, 75, 0, 65, 0, 50, 75, 0, 140, 0)  # Down to 0
+    _def_servo_pos = (0, 0, 150, 150, 60, 110, 120, 50, 60, 135, 132, 110, 90, 150, 110)
+    _mins = (0, 0, 40, 130, 0, 60, 50, 50, 20, 0, 48, 48, 0, 95, 45, 0)
+    # Down to 0
     _maxs = (
-        180,
-        180,
-        130,
-        115,
-        180,
-        130,
-        170,
-        180,
-        100,
+        0,
+        0,
+        150,
+        160,
         180,
         120,
-        170,
         180,
-        175,
+        130,
         180,
+        180,
+        180,
+        180,
+        180,
+        150,
+        180,
+        0,
     )
 
     _audioA = pygame.mixer.Sound(os.path.join(__audio_dir__, 'eve.mp3'))
@@ -264,6 +267,13 @@ class Walle:
         else:
             self.eyes.angle = self.eyes.min_angle
 
+    def rest(self):
+        for x in range(2,len(self._kit.servo)):
+            try:
+                self._kit.servo[x].angle = None
+            except ValueError as e:
+                pass
+
     def update(self, controller: UltimateC):
         self._handle_track_ctrl(controller)
         self._handle_shoulders(controller)
@@ -283,7 +293,7 @@ def main():
                 walle.update(controller)
         except:
             pass
-    walle.reset_servos()
+    walle.rest()
 
 
 if __name__ == "__main__":
