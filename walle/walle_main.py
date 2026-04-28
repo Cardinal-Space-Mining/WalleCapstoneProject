@@ -6,6 +6,9 @@ import math
 
 import os
 import atexit
+import time
+
+from enum import Enum
 
 import pygame
 
@@ -46,6 +49,28 @@ class LimitedServo:
 
 
 class Walle:
+    class _Emote(Enum):
+        NONE = (0,)
+        HELLO = 1
+
+    class _ServoMap(Enum):
+        Left_motor = 0
+        Right_Motor = 1
+        Left_Shoulder = 2
+        Left_Elbow = 3
+        Left_Wrist = 4
+        Left_Thumb = 5
+        Left_Fingers = 6
+        Right_Shoulder = 7
+        Right_Elbow = 8
+        Right_Wrist = 9
+        Right_Thumb = 10
+        Right_Finger = 11
+        Head_Pan = 12
+        Head_Tilt = 13
+        Eye_Actuation = 14
+        N_A = 15
+
     __slots__ = (
         "_kit",
         "_not_a",
@@ -56,6 +81,9 @@ class Walle:
         "_audioX",
         "_audioY",
         "_audioB",
+        "_selected_emote",
+        "_emote_start_time",
+        "_emote_sound",
     )
     _kit: ServoKit
     _not_a: bool
@@ -101,6 +129,9 @@ class Walle:
         self._audioX = pygame.mixer.Sound(Walle._audioX_path)
         self._audioY = pygame.mixer.Sound(Walle._audioY_path)
         self._audioB = pygame.mixer.Sound(Walle._audioB_path)
+        self._selected_emote = Walle._Emote.NONE
+        self._emote_start_time = time.time()
+        self._emote_sound = None
 
     def reset_servos(self):
         self.ltrack.throttle = 0
@@ -199,12 +230,15 @@ class Walle:
         )
         self.ltrack.throttle = -motor_a
         self.rtrack.throttle = motor_b
+        # self._audioA.play()
+        # # print("Audio A")
 
     def _handle_audio(self, controller: UltimateC):
         # Audio A
         if controller.get_a_button() == 1 and self._not_a:
-            self._audioA.play()
-            # print("Audio A")
+            # self._audioA.play()
+            # # print("Audio A")
+            self._start_emote(Walle._Emote.HELLO)
             self._not_a = False
         if controller.get_a_button() != 1:
             self._not_a = True
@@ -235,14 +269,15 @@ class Walle:
 
     def _handle_shoulders(self, controller: UltimateC):
         if controller.get_l_bumper() == 1:
-            shoulder_speed = 0.5
-            joystick_y = controller.get_r_joy_y()
-            self.lshoulder.angle -= shoulder_speed * joystick_y
-            self.rshoulder.angle += shoulder_speed * joystick_y
+            shoulder_speed = 1
+            ds = controller.get_r_joy_y() * shoulder_speed
+            print(ds)
+            self.lshoulder.angle -= ds
+            self.rshoulder.angle += ds
 
     def _handle_elbows(self, controller: UltimateC):
         if controller.get_l_bumper() == 1:
-            elbow_speed = 0.25
+            elbow_speed = 1
             joystick_x = controller.get_r_joy_x()
             self.lelbow.angle -= elbow_speed * joystick_x
             self.relbow.angle += elbow_speed * joystick_x
@@ -271,7 +306,7 @@ class Walle:
         if controller.get_l_bumper() == 0:
             # print(f"D_neck: {controller.get_r_joy_x() * headPan_speed}")
             d_neck = controller.get_r_joy_x() * headPan_speed
-            if abs(d_neck )< 0.01:
+            if abs(d_neck) < 0.01:
                 d_neck = 0
             self.headpan.angle += d_neck
             self.headtilt.angle += controller.get_r_joy_y() * headTilt_speed
@@ -283,21 +318,79 @@ class Walle:
             self.eyes.angle = self.eyes.min_angle
 
     def rest(self):
+        self._kit.continuous_servo[0].throttle = 0
+        self._kit.continuous_servo[1].throttle = 0
         for x in range(2, len(self._kit.servo)):
             try:
                 self._kit.servo[x].angle = None
             except ValueError as e:
                 pass
 
+    ## Emote Section
+    _audio_hello_path = os.path.join(__audio_dir__, "Hello.mp3")
+
+    def _start_emote(self, emote: "Walle._Emote"):
+        emote_audio = {
+            Walle._Emote.NONE: None,
+            Walle._Emote.HELLO: Walle._audio_hello_path,
+        }
+        self._selected_emote = emote
+        self._emote_start_time = time.time()
+        if emote_audio[self._selected_emote] is not None:
+            self._emote_sound = pygame.mixer.Sound(emote_audio[self._selected_emote])
+            self._emote_sound.play()
+        else:
+            self._emote_sound = None
+        # self.rest()
+        self.ltrack.throttle = 0
+        v = [0]
+        self.rtrack.throttle = 0
+
+    def _update_hello_emote(self, dt: float):
+        l_wrist_mean = Walle._def_servo_pos[Walle._ServoMap.Left_Wrist.value]
+        l_wrist_amp = 30
+
+        theta = (dt % 1) * 2 * math.pi
+
+        l_wrist_v = (l_wrist_amp * math.cos(theta)) + l_wrist_mean
+
+        self.lwrist.angle = l_wrist_v
+
+        self.lthumb.angle = Walle._maxs[Walle._ServoMap.Left_Thumb.value]
+        self.lfingers.angle = Walle._mins[Walle._ServoMap.Left_Fingers.value]
+        self.lshoulder.angle = Walle._mins[Walle._ServoMap.Left_Shoulder.value]
+        self.lelbow.angle = Walle._mins[Walle._ServoMap.Left_Elbow.value]
+
+    def _handle_emotes(self):
+        emote_dt = {Walle._Emote.NONE: float("inf"), Walle._Emote.HELLO: 2}
+
+        emote_hdl_fn = {
+            Walle._Emote.NONE: lambda dt: None,
+            Walle._Emote.HELLO: self._update_hello_emote,
+        }
+
+        # Update Emotes
+        elapsed_time = time.time() - self._emote_start_time
+
+        if elapsed_time > emote_dt[self._selected_emote]:
+            self._start_emote(Walle._Emote.NONE)
+
+        emote_hdl_fn[self._selected_emote](elapsed_time)
+
+    ## End Emote Section
+
     def update(self, controller: UltimateC):
-        self._handle_track_ctrl(controller)
-        self._handle_shoulders(controller)
-        self._handle_elbows(controller)
-        self._handle_wrists(controller)
-        self._handle_hands(controller)
-        self._handle_neck(controller)
-        self._handle_eyes(controller)
-        self._handle_audio(controller)
+        if self._selected_emote is not Walle._Emote.NONE:
+            self._handle_emotes()
+        else:
+            self._handle_track_ctrl(controller)
+            self._handle_shoulders(controller)
+            self._handle_elbows(controller)
+            self._handle_wrists(controller)
+            self._handle_hands(controller)
+            self._handle_neck(controller)
+            self._handle_eyes(controller)
+            self._handle_audio(controller)
 
 
 def main():
@@ -314,6 +407,7 @@ def main():
                 for event in pygame.event.get():
                     controller.handle_pygame_evt(event)
                 walle.update(controller)
+                time.sleep(0.01)
         except KeyboardInterrupt:
             pass
 
