@@ -14,4 +14,4 @@
 12, Head Pan          , r_joy_x,0,180,0,180,90
 13, Head Tilt         , r_joy_y,95,150,95,150,150
 14, Eye Actuation     , r_joy_button,45,180,45,180,110
-15, N/A               ,,,,0,0,
+15, Front Panel ,NA,NA,NA,NA,NA,NA
